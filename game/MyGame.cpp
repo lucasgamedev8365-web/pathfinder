@@ -5,8 +5,88 @@
 
 bool PathFind(vector<NODE>& graph, int nStart, int nGoal, vector<int>& path)
 {
-	path.push_back(nStart);
-	path.push_back(nGoal);
+	// create a list of open nodes
+	vector<int> open;
+
+	// mark all nodes in the graph as unvisited
+	for (vector<NODE>::iterator it = graph.begin(); it != graph.end(); ++it) 
+	{
+		it->open = false;
+		it->closed = false;
+	}
+
+	// open the start node
+	graph[nStart].open = true;
+	graph[nStart].costSoFar = 0;
+	graph[nStart].nConnection = -1;
+
+	open.push_back(nStart);
+
+	while (open.size() > 0)
+	{
+		
+		// Select the current node. It will be the node in the list of open nodes with the smallest costSoFar
+		/*int currentNode = open.front();
+		if (open.size() > 1)
+		{
+			for (vector<int>::iterator it = open.begin(); it != open.end(); ++it)
+			{
+				if (graph[currentNode].costSoFar > graph[it]->costSoFar  )
+				{
+					currentNode = it;
+				}
+			}
+		}*/
+		list<int>::iterator iCurrent = min_element(open.begin(), open.end(), [graph](int i, int j) -> bool 
+			{
+				return graph[i].costSoFar < graph[j].costSoFar;
+			});
+		int currentNode = *iCurrent;
+
+		// Found the goal node?
+		if (currentNode == nGoal)
+			break;
+
+		for each (CONNECTION connection in graph[currentNode].conlist)
+		{
+			int endNode = connection.nEnd;
+			int newCostSoFar = graph[currentNode].costSoFar + connection.cost;
+
+			// for open nodes, ignore if the current route worse then the old one
+			if (graph[endNode].open && graph[endNode].costSoFar <= newCostSoFar)
+				continue;
+
+			// Wow, we've found a better route!
+			graph[endNode].costSoFar = newCostSoFar;
+			graph[endNode].nConnection = currentNode;
+
+			// if unvisited yet, add to the open list
+			if (!graph[endNode].open)
+			{
+				graph[endNode].open = true;
+				open.push_back(endNode);
+			}
+		}
+
+		// We can now close the current node...
+		graph[currentNode].closed = true;
+		//remove the current node from the open nodes list
+		open.erase(iCurrent);
+	}
+
+	// Collect the path from the generated graph data
+	if (open.size() <= 0)
+		return false;  // path not found!
+
+	int i = nGoal;
+	while (graph[i].nConnection >= 0)
+	{
+		path.push_back(i);
+		i = graph[i].nConnection;
+	}
+	path.push_back(i);
+
+	reverse(path.begin(), path.end());
 	return true;
 }
 

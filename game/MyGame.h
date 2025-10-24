@@ -16,7 +16,9 @@ struct NODE
 	CVector pos; // 2D position of the node
 
 	list<CONNECTION> conlist; // list of connections
-
+	float costSoFar;
+	int nConnection;
+	bool open, closed;
 };
 
 class CMyGame : public CGame
