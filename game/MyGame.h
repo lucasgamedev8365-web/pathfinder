@@ -1,4 +1,23 @@
 #pragma once
+struct CONNECTION
+
+{
+
+	int nEnd; // index of the destination node
+
+	float cost; // cost of the transition
+
+};
+
+struct NODE
+
+{
+
+	CVector pos; // 2D position of the node
+
+	list<CONNECTION> conlist; // list of connections
+
+};
 
 class CMyGame : public CGame
 {
@@ -9,6 +28,7 @@ class CMyGame : public CGame
 	static char *m_tileLayout[12];	// Tiles layout
 
 	list<CVector> m_waypoints;
+	vector<NODE> m_graph;
 
 public:
 	CMyGame(void);

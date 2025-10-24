@@ -3,6 +3,26 @@
 
 #pragma warning (disable: 4244)
 
+bool PathFind(vector<NODE>& graph, int nStart, int nGoal, vector<int>& path)
+{
+	path.push_back(nStart);
+	path.push_back(nGoal);
+	return true;
+}
+
+
+float Coords[][2] = 
+{
+	{ 352, 160 }, { 480, 160 }, { 608, 288 }, { 608, 96 }, { 992, 288 }, { 912, 96 }, { 992, 160 }, { 1184, 160 }, { 992, 480 }, { 1184, 480 }, { 1184, 672 }, { 800, 672 },
+	{ 736, 480 }, { 544, 480 }, { 512, 672 }, { 96, 672 }, { 96, 416 }, { 352, 416 }
+};
+
+int Connections[][2] =
+{
+	{ 0, 1 }, { 0, 17 }, { 1, 2 }, { 1, 3 }, { 2, 3 }, { 2, 4 }, { 3, 5 }, { 4, 5 }, { 4, 6 }, { 4, 8 }, { 5, 6 }, { 6, 7 }, { 7, 9 }, { 8, 9 }, { 9, 10 },{ 10, 11 }, { 11, 12 },
+	{ 11, 14 }, { 12, 13 }, { 13, 14 }, { 14, 15 }, { 15, 16 }, { 16, 17 }
+};
+
 char* CMyGame::m_tileLayout[12] =
 {
 	"XXXXXXXXXXXXXXXXXXXX",
@@ -26,6 +46,8 @@ CMyGame::CMyGame(void) :
 	m_npc.LoadAnimation("Spider64.png", "walk", CSprite::Sheet(4, 2).Col(0).From(0).To(1));
 	m_npc.LoadAnimation("Spider64.png", "idle", CSprite::Sheet(4, 2).Col(2).From(0).To(1));
 	m_npc.SetAnimation("idle", 4);
+
+	
 }
 
 CMyGame::~CMyGame(void)
@@ -69,9 +91,9 @@ void CMyGame::OnUpdate()
 
 void CMyGame::OnDraw(CGraphics* g)
 {
-	//for (NODE n : m_graph)
-	//	for (CONNECTION c : n.conlist)
-	//		g->DrawLine(n.pos, m_graph[c.nEnd].pos, CColor::Black());
+	for (NODE n : m_graph)
+		for (CONNECTION c : n.conlist)
+			g->DrawLine(n.pos, m_graph[c.nEnd].pos, CColor::Black());
 	m_nodes.for_each(&CSprite::Draw, g);
 	m_tiles.for_each(&CSprite::Draw, g);
 	m_pumpkin.Draw(g);
@@ -86,14 +108,34 @@ void CMyGame::OnInitialize()
 {
 	// Create Nodes
 
-	//int i = 0;
-	//for (NODE n : m_graph)
-	//{
-	//	stringstream s;
-	//	s << i++;
-	//	m_nodes.push_back(new CSpriteOval(n.pos, 12, CColor::White(), CColor::Black(), 0));
-	//	m_nodes.push_back(new CSpriteText(n.pos, "arial.ttf", 14, s.str(), CColor::Black(), 0));
-	//}
+	// create graph structure - nodes
+
+	for (float* coord : Coords)
+	{
+		m_graph.push_back(NODE{ CVector(coord[0], coord[1]) });
+	}
+
+	// create graph structure - connections
+
+	for (int* conn : Connections)
+	{
+		int ind1 = conn[0];
+		int ind2 = conn[1];
+		NODE& node1 = m_graph[ind1];
+		NODE& node2 = m_graph[ind2];
+		float dist = Distance(node1.pos, node2.pos);
+		node1.conlist.push_back(CONNECTION{ ind2, dist });
+		node2.conlist.push_back(CONNECTION{ ind1, dist });
+	}
+
+	int i = 0;
+	for (NODE n : m_graph)
+	{
+		stringstream s;
+		s << i++;
+		m_nodes.push_back(new CSpriteOval(n.pos, 12, CColor::White(), CColor::Black(), 0));
+		m_nodes.push_back(new CSpriteText(n.pos, "arial.ttf", 14, s.str(), CColor::Black(), 0));
+	}
 
 	// Create Tiles
 	for (int y = 0; y < 12; y++)
@@ -128,6 +170,7 @@ void CMyGame::OnDisplayMenu()
 // as a second phase after a menu or a welcome screen
 void CMyGame::OnStartGame()
 {
+	
 }
 
 // called when a new level started - first call for nLevel = 1
@@ -174,19 +217,42 @@ void CMyGame::OnLButtonDown(Uint16 x, Uint16 y)
 {
 	CVector v(x, y);	// destination
 
-	// Place the Pumpkin at the clicked position
-	m_pumpkin.SetPosition(v);
-
 	// check if the move is legal
+	if (m_tileLayout[y / 64][x / 64] != ' ')
+		return;	// cannot go into a wall!
 
 	// find the first node: the closest to the NPC
+	vector<NODE>::iterator iFirst =
+		min_element(m_graph.begin(), m_graph.end(), [this](NODE& n1, NODE& n2) -> bool {
+		return Distance(n1.pos, m_npc.GetPos()) < Distance(n2.pos, m_npc.GetPos());
+			});
+	int nFirst = iFirst - m_graph.begin();
 
 	// find the last node: the closest to the destination
+	vector<NODE>::iterator iLast =
+		min_element(m_graph.begin(), m_graph.end(), [v](NODE& n1, NODE& n2) -> bool {
+		return Distance(n1.pos, v) < Distance(n2.pos, v);
+			});
+	int nLast = iLast - m_graph.begin();
 
 	// remove the current way points and reset the NPC
+	if (!m_waypoints.empty())
+	{
+		m_waypoints.clear();
+		m_npc.SetVelocity(0, 0);
+	}
 
 	// call the path finding algorithm to complete the waypoints
+	vector<int> path;
+	if (PathFind(m_graph, nFirst, nLast, path))
+	{
+		for (int i : path)
+			m_waypoints.push_back(m_graph[i].pos);
+		m_waypoints.push_back(v);
+	}
+
 }
+
 
 void CMyGame::OnLButtonUp(Uint16 x,Uint16 y)
 {
