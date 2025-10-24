@@ -3,6 +3,7 @@
 class CMyGame : public CGame
 {
 	CSprite m_npc;					// Spider
+	CSprite m_pumpkin;				// Pumpkin
 	CSpriteList m_tiles;			// Tiles
 	CSpriteList m_nodes;			// Nodes
 	static char *m_tileLayout[12];	// Tiles layout
