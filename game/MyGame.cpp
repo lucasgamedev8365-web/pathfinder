@@ -3,10 +3,14 @@
 
 #pragma warning (disable: 4244)
 
+//problems:
+//spider travels to nearest node regardless of line of sight
+//spider needs to travel to a node first, regardless of whether the pumpkin is closer and within line of sight
+
 bool PathFind(vector<NODE>& graph, int nStart, int nGoal, vector<int>& path)
 {
 	// create a list of open nodes
-	vector<int> open;
+	list<int> open;
 
 	// mark all nodes in the graph as unvisited
 	for (vector<NODE>::iterator it = graph.begin(); it != graph.end(); ++it) 
