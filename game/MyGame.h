@@ -1,4 +1,6 @@
 #pragma once
+#include "CGuard.h"
+
 struct CONNECTION
 
 {
@@ -23,18 +25,25 @@ struct NODE
 
 class CMyGame : public CGame
 {
-	CSprite m_npc;					// Spider
-	CSprite m_pumpkin;				// Pumpkin
+	CSpriteRect m_player;
 	CSpriteList m_tiles;			// Tiles
 	CSpriteList m_nodes;			// Nodes
+	CSpriteList m_guards;
 	static char *m_tileLayout[12];	// Tiles layout
+	float num = 0;
+	float num1 = 0;
 
-	list<CVector> m_waypoints;
 	vector<NODE> m_graph;
 
 public:
 	CMyGame(void);
 	~CMyGame(void);
+	
+	// My own functions
+	virtual void Waypointing(CVector v);
+	virtual void PlayerControl();
+	virtual void GuardControl();
+	virtual void CreateSound(Uint32 x, Uint32 y, Uint32 radius);
 
 	// Per-Frame Callback Funtions (must be implemented!)
 	virtual void OnUpdate();
